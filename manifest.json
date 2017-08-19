@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+
+  "name": "SharePointSpy",
+  "description": "For testing SharePoint permissions and stuff",
+  "icons": { "16": "icon_16.png",
+             "48": "icon_48.png",
+             "128": "icon_128.png" },
+  "version": "1.0",
+
+  "browser_action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "cookies",
+    "tabs",
+    "http://*/",
+    "https://*/"
+  ]
+}

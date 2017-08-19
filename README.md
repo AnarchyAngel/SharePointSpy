@@ -1,2 +1,2 @@
 # SharePointSpy
-For testing SharePoint permissions and stuff
+Chrome extension for testing SharePoint permissions and stuff...
