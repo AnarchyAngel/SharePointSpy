@@ -9,7 +9,11 @@
   "version": "1.0",
 
   "browser_action": {
-    "default_popup": "popup.html"
+    //"default_popup": "popup.html"
+  },
+  "background": {	
+    "scripts": ["util.js"],
+    "persistent": false
   },
   "permissions": [
     "activeTab",

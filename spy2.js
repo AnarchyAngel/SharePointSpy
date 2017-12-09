@@ -1,4 +1,4 @@
-function setup(){
+	function setup(){
   var urls = new Array(
 	'/_catalogs/masterpage/Forms/AllItems.aspx',
 	'/_catalogs/wp/Forms/AllItems.aspx',
@@ -17,7 +17,7 @@ function setup(){
 	'/_layouts/editgrp.aspx',
 	'/_layouts/editprms.aspx',
 	'/_layouts/groups.aspx',
-	//'/_layouts/help.aspx',
+	//'/_layouts/help.aspx', //added back after move to new tab
 	'/_layouts/images/',
 	'/_layouts/listedit.aspx',
 	'/_layouts/ManageFeatures.aspx',
@@ -59,8 +59,8 @@ function setup(){
 	'/_layouts/themeweb.aspx',
 	'/_layouts/topnav.aspx',
 	'/_layouts/user.aspx',
-	//'/_layouts/userdisp.aspx',
-	//'/_layouts/userdisp.aspx?ID=1',
+	//'/_layouts/userdisp.aspx', //readded
+	//'/_layouts/userdisp.aspx?ID=1', //readded
 	'/_layouts/useredit.aspx',
 	'/_layouts/useredit.aspx?ID=1&Source=%2F%5Flayouts%2Fpeople%2Easpx',
 	'/_layouts/viewgrouppermissions.aspx',
@@ -164,9 +164,7 @@ function showAbout(){
   var msg = "SharePointSpy by Adam Espitia\r";
   msg += "http://aahideaway.blogspot.com\r";
   msg += "@anarchyang31\r\r";
-  msg += "Version 1.0\r";
-  msg += "TODO:\r";
-  msg += "Fix 302 redirect issues";
+  msg += "Version 1.5\r";
   alert(msg);
 }
 
@@ -191,42 +189,54 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
-function anon(){ 
- var url = document.getElementById("target").value;
- chrome.cookies.remove({ url: url, name: "WSS_KeepSessionAuthenticated"});
- var cookie = "{kkk}";
- if(cookie){
-  chrome.cookies.set({ url: url, name: "WSS_KeepSessionAuthenticated", value: cookie, path: "/"});
- }
+function anon(url){ 
+ fetch(url, {
+    // credentials: 'omit', // this is the default value
+    cache: 'no-store',
+ }).then(function(response) {
+    // TODO: Handle the response.
+    // https://fetch.spec.whatwg.org/#response-class
+    // https://fetch.spec.whatwg.org/#body
+    return response.text();
+ }).catch(function(er) {
+    alert(er);
+    return "404";
+ });
 }
 
-chrome.tabs.getSelected(null,function(tab) {
-  var tablink = tab.url;
-  document.getElementById("target").value=tablink;
-});
+
+// Put last used tab URL in target input field.
+// TODO: strip last / from url
+function loadTar(){
+ var urlTar = location.search.split('target=')[1];
+ document.getElementById("target").value=urlTar;
+}
 
 function setCookie(){
  var url = document.getElementById("target").value;
  chrome.cookies.remove({ url: url, name: "WSS_KeepSessionAuthenticated"});
+ chrome.cookies.remove({ url: url, name: "__utmc"});
  var cookie = prompt("Enter cookie string:","{8320514b-5e32-47ea-ae41-6f0f91dafff4}");
  if(cookie){
   chrome.cookies.set({ url: url, name: "WSS_KeepSessionAuthenticated", value: cookie, path: "/"});
+  chrome.cookies.set({ url: url, name: "__utmc", value: cookie, path: "/"});
   document.getElementById("cookiestatus").innerHTML="Cookie set as "+cookie;
-  chrome.cookies.get({ url: url, name: "WSS_KeepSessionAuthenticated"}, function(cookie){alert(cookie.value);});
+  //chrome.cookies.get({ url: url, name: "WSS_KeepSessionAuthenticated"}, function(cookie){alert(cookie.value);});
  }
 }
 
 function con(url){
   //alert(document.getElementById("target").checked);
-  if(document.getElementById("target").checked == false)
+  if(document.getElementById("anon").checked)
   {
-   anon();
+   var intMsg=anon(url);
+   return intMsg;
   }
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.open("GET", url, false);
   //alert(xmlhttp.responseText);
   xmlhttp.send();
-  return xmlhttp.responseText;
+  return Array(xmlhttp.responseText, xmlhttp.status);
 }
 
 function run(tar, urls){
@@ -234,13 +244,13 @@ function run(tar, urls){
   var out = document.getElementById("output").innerHTML;
   for(i=0; i < urls.length; i++){
     url = tar+urls[i];
-    con(url);
+    //con(url);
     var res = con(url);
     var title = new String();
     try {
-      var prr = res.split("<title>");
+      var prr = res[0].split("<title>");
       var prr2 = prr[1].split("</title>");
-      if(prr2[0].indexOf("Error") == -1){
+      if(prr2[0].indexOf("Error") == -1 && prr2[0].indexOf("Access required") == -1){
         title = "OK";
         var rawres = "<font color='red'><font size='3'><B>[ "+title+" ] - "+urls[i]+" - </b><a href='"+url+"' target='about:blank'>Link</a></font></font>";
       }else{
@@ -249,8 +259,9 @@ function run(tar, urls){
       }
     }
     catch(err) {
-      if(res.indexOf("404") == -1){
-        title = "ERROR";
+      //alert(err);
+      if(!res){
+        title = "401/403";
         var rawres = "<font color='brown'><font size='3'><B>[ "+title+" ] - "+urls[i]+" - </b><a href='"+url+"' target='about:blank'>Link</a></font></font>";
       }else{
 	title = "404 NOT FOUND";
@@ -267,3 +278,5 @@ function run(tar, urls){
   document.getElementById("sitesearch").disabled = false;
   document.getElementById("about").disabled = false;
 }
+
+document.onload = loadTar();
